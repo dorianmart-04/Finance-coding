@@ -9,12 +9,6 @@ The projects aim to replicate real front-office use cases such as:
 - Automation of reporting and trading-related processes
 - Quantitative analysis supporting trading and distribution desks
 
-## Selected Projects
-- **FX Market Monitor (Python)**  
-  Daily monitoring of major FX pairs (EUR/USD, GBP/USD, USD/JPY), including returns analysis, volatility estimation, and distributional properties.
-
-(Additional projects will be added progressively.)
-
 ## Technologies
 - Python (pandas, numpy, matplotlib, scipy, yfinance)
 - VBA (Excel-based automation)
