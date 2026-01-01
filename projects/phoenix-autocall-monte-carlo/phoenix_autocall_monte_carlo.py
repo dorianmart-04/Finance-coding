@@ -12,35 +12,35 @@ import time
 
 def phoenix_autocall_mc(S0, r, q, sigma, T, n_obs, n_sim):
     """
-    Phoenix Autocall (Monte Carlo) - version simple.
+    Phoenix Autocall (Monte Carlo) – simplified version.
 
-    Principe :
-    - On simule n_sim trajectoires du sous-jacent (GBM) aux dates d'observation
-    - À chaque date :
-        * si S >= barrière autocall → remboursement + coupon (+ mémoire) et arrêt
-        * sinon si S >= barrière coupon → paiement du coupon (+ mémoire), mémoire remise à zéro
-        * sinon → coupon stocké en mémoire
-    - À maturité (si pas d'autocall) :
-        * remboursement du nominal
-        * sauf si S_T < barrière capital → perte proportionnelle à la performance finale
+    Principle:
+    - We simulate n_sim underlying paths (GBM) at observation dates
+    - At each observation date:
+        * if S >= autocall barrier → redemption + coupon (+ memory) and termination
+        * else if S >= coupon barrier → coupon payment (+ memory), memory reset
+        * else → coupon stored in memory
+    - At maturity (if no autocall):
+        * nominal redemption
+        * unless S_T < capital barrier → capital loss proportional to final performance
     """
 
-    # --- Paramètres temporels ---
+    # --- Time parameters ---
     dt = T / n_obs
 
-    # --- Paramètres du produit ---
+    # --- Product parameters ---
     autocall_barrier = 1.00 * S0
     coupon_barrier   = 0.70 * S0
     capital_barrier  = 0.60 * S0
 
-    coupon_rate = 0.02   # 2 % par période
+    coupon_rate = 0.02   # 2% per period
     nominal = 100
 
-    # --- Simulation des trajectoires (GBM) ---
-    np.random.seed(42)  # reproductibilité des résultats
+    # --- Path simulation (GBM) ---
+    np.random.seed(42)  # reproducibility
 
     prices = np.zeros((n_sim, n_obs + 1))
-    prices[:, 0] = S0   # toutes les trajectoires commencent à S0
+    prices[:, 0] = S0   # all paths start at S0
 
     shocks = np.random.randn(n_sim, n_obs)
 
@@ -50,11 +50,11 @@ def phoenix_autocall_mc(S0, r, q, sigma, T, n_obs, n_sim):
     for t in range(1, n_obs + 1):
         prices[:, t] = prices[:, t-1] * np.exp(drift + vol_step * shocks[:, t-1])
 
-    # --- Calcul des payoffs ---
+    # --- Payoff computation ---
     payoff = np.zeros(n_sim)
 
-    alive = np.ones(n_sim, dtype=bool)   # produit encore en vie
-    coupon_memory = np.zeros(n_sim)      # coupons mémorisés
+    alive = np.ones(n_sim, dtype=bool)   # product still alive
+    coupon_memory = np.zeros(n_sim)      # accumulated coupons
 
     for t in range(1, n_obs + 1):
         St = prices[:, t]
@@ -65,38 +65,38 @@ def phoenix_autocall_mc(S0, r, q, sigma, T, n_obs, n_sim):
         payoff[autocall] += (nominal + nominal * coupon_rate + coupon_memory[autocall]) * discount
         alive[autocall] = False
 
-        # 2) Coupon (si produit toujours en vie)
+        # 2) Coupon payment (if product still alive)
         coupon = alive & (St >= coupon_barrier)
         payoff[coupon] += (nominal * coupon_rate + coupon_memory[coupon]) * discount
         coupon_memory[coupon] = 0
 
-        # 3) Coupon non payé → mise en mémoire
+        # 3) Coupon not paid → stored in memory
         missed = alive & (St < coupon_barrier)
         coupon_memory[missed] += nominal * coupon_rate
 
-    # --- Traitement à maturité ---
+    # --- Maturity payoff ---
     ST = prices[:, n_obs]
     discount_T = np.exp(-r * T)
 
     still_alive = alive
 
-    # Remboursement du nominal par défaut
+    # Nominal redemption by default
     payoff[still_alive] += nominal * discount_T
 
-    # Perte en capital si la barrière de protection est franchie
+    # Capital loss if the protection barrier is breached
     capital_loss = still_alive & (ST < capital_barrier)
 
     payoff[capital_loss] -= nominal * discount_T
     payoff[capital_loss] += (ST[capital_loss] / S0 * nominal) * discount_T
 
-    # --- Résultat Monte Carlo ---
+    # --- Monte Carlo result ---
     price = np.mean(payoff)
     mc_error = np.std(payoff, ddof=1) / np.sqrt(n_sim)
 
     return price, mc_error
 
 
-# --- Exemple d'exécution ---
+# --- Example run ---
 S0 = 100
 r = 0.05
 q = 0.00
@@ -109,8 +109,8 @@ start = time.time()
 price, error = phoenix_autocall_mc(S0, r, q, sigma, T, n_obs, n_sim)
 end = time.time()
 
-print("PHOENIX AUTOCALL – Monte Carlo (simple)")
-print(f"Prix : {price:.4f}")
-print(f"Erreur MC : {error:.4f}")
-print(f"Temps de calcul : {end - start:.2f}s")
+print("PHOENIX AUTOCALL – Monte Carlo (simplified)")
+print(f"Price: {price:.4f}")
+print(f"MC error: {error:.4f}")
+print(f"Computation time: {end - start:.2f}s")
 
