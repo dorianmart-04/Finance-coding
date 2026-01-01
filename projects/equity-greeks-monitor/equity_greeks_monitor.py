@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 
 # -----------------------------
-# Fonctions Black-Scholes (Call)
+# Black-Scholes Functions (Call)
 # -----------------------------
 def bs_call_price(S, K, T, r, sigma):
     d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
@@ -41,16 +41,16 @@ def bs_theta(S, K, T, r, sigma):
     )
     return theta / 365  # par jour
 
-# Paramètres de l'option
+# Option parameters
 
-S0 = 100      # spot initial
+S0 = 100      # Initial spot
 K = 100       # strike
-T = 0.5       # maturité (6 mois)
-r = 0.02      # taux sans risque (2%)
-sigma = 0.20  # volatilité (20%)
+T = 0.5       # maturity (6 months)
+r = 0.02      # risk-free rate (2%)
+sigma = 0.20  # volatility (20%)
 
 
-# Grille de spot
+# Spot grid
 spot_grid = np.linspace(60, 140, 100)
 
 
